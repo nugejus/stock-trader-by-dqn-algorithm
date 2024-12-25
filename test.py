@@ -19,7 +19,7 @@ buffer_capacity = 1e8
 dataloader = prepare_data()
 data = next(dataloader)
 
-env = TradingEnvironment(data)
+env = TradingEnvironment(data, initial_balance = 1e10)
 env.reset()
 
 state_dim, action_dim = env.observation_space.shape[0], env.action_space.n 
@@ -29,7 +29,7 @@ target_net = DQN(state_dim, action_dim)
 target_net.load_state_dict(policy_net.state_dict())
 target_net.eval()
 
-optimizer = torch.optim.Adam(policy_net.parameters(), lr=1e-3)
+optimizer = torch.optim.Adam(policy_net.parameters(), lr=1e-6)
 replay_buffer = ReplayBuffer(buffer_capacity)
 
 

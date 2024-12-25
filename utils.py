@@ -12,8 +12,8 @@ def select_action(state, policy_net, epsilon, action_dim):
 
 def optimize_model(policy_net, target_net, replay_buffer, optimizer, batch_size, gamma):
     if len(replay_buffer) < batch_size:
-        return
-    
+        return 0
+
     # 미니배치 샘플링
     transitions = replay_buffer.sample(batch_size)
     states, actions, rewards, next_states, dones = zip(*transitions)
@@ -25,25 +25,28 @@ def optimize_model(policy_net, target_net, replay_buffer, optimizer, batch_size,
     dones = torch.FloatTensor(dones)
 
     # Q(s, a) 계산
-    q_action, q_values = policy_net(states)
-    q_action = q_action.gather(1,actions)
+    q_action = policy_net(states)
+    q_action = q_action.gather(1, actions)
 
     # Q(s', a') 계산
     next_q_values = target_net(next_states).max(1)[0].detach()
     target_q_values = rewards + gamma * next_q_values * (1 - dones)
 
     # 손실 계산
-    loss = torch.nn.MSELoss()(q_values, target_q_values.unsqueeze(1))
+    loss = torch.nn.MSELoss()(q_action, target_q_values.unsqueeze(1))
 
     # 네트워크 업데이트
     optimizer.zero_grad()
     loss.backward()
     optimizer.step()
 
+    return loss
+
 
 def train(env, policy_net, target_net, replay_buffer, optimizer, batch_size, gamma, epsilon, data_len, state, action_dim):
     total_reward = 0
-    for _ in range(data_len):  # 각 에피소드의 최대 타임스텝
+    avg_loss, cnt = 0, 0
+    for i in range(data_len):  # 각 에피소드의 최대 타임스텝
         action, value = select_action(state, policy_net, epsilon, action_dim)
         next_state, reward, done, _ = env.step(action, value)
         total_reward += reward
@@ -52,7 +55,15 @@ def train(env, policy_net, target_net, replay_buffer, optimizer, batch_size, gam
         state = next_state
 
         # 모델 업데이트
-        optimize_model(policy_net, target_net, replay_buffer, optimizer, batch_size, gamma)
+        loss = optimize_model(policy_net, target_net, replay_buffer, optimizer, batch_size, gamma)
+
+        avg_loss += loss
+        cnt += 1
+
+        if i % 1000 == 0:
+            env.render()
+            print(f"Loss : {avg_loss / cnt}")
+            
 
         if done:
             break

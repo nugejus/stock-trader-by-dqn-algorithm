@@ -42,7 +42,7 @@ class TradingEnvironment(gym.Env):
         self.btc = 0
         return self._get_observation()
     
-    def step(self, action, value):
+    def step(self, action, value = 1):
         """
         한 스텝 진행
         Args:
@@ -109,5 +109,5 @@ class TradingEnvironment(gym.Env):
         """
         print(f"Step: {self.current_step}")
         print(f"Balance: {self.balance} USD")
-        print(f"BTC: {self.balance} USD")
+        print(f"BTC: {self.btc} BTC")
         print(f"Net Worth: {self.net_worth} USD")

@@ -16,6 +16,6 @@ class DQN(nn.Module):
     def forward(self, state):
         x = self.fc(state)
         action = self.action(x)
-        value = self.value(x)
+        # value = self.value(x)
 
-        return action, value
+        return action
